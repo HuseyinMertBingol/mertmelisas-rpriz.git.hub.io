@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sadece Senin İçin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #fdf3f1;
+    --bg2: #f9dcdc;
+    --ink: #4a3b3b;
+    --muted: #9a8585;
+    --accent: #f0585f;
+    --key: rgba(255, 250, 247, 0.85);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    background: radial-gradient(circle at 20% 10%, var(--bg1), var(--bg2));
+    overflow: hidden;
+  }
+
+  /* floating petals */
+  .petal {
+    position: fixed; top: -40px;
+    width: 14px; height: 18px;
+    background: rgba(240, 120, 130, .35);
+    border-radius: 80% 0 80% 0;
+    animation: fall linear infinite;
+    pointer-events: none;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); }
+  }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: env(safe-area-inset-top, 0) 20px env(safe-area-inset-bottom, 0);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  .hidden { opacity: 0; pointer-events: none; transform: scale(1.04); }
+
+  .eyebrow {
+    letter-spacing: .35em; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; margin: 0 0 18px;
+  }
+  .names {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 40px; display: flex; align-items: center; gap: 14px; margin: 0 0 28px;
+  }
+  .heart { color: var(--accent); font-size: 36px; animation: beat 1.4s infinite; }
+  @keyframes beat { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+  .hint { color: var(--muted); font-size: 15px; margin: 0 0 22px; text-align: center; line-height: 1.6; }
+  .hint small { font-size: 12px; letter-spacing: .08em; opacity: .85; }
+
+  .dots { display: flex; gap: 16px; margin-bottom: 34px; }
+  .dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1.5px solid var(--muted); transition: all .2s;
+  }
+  .dot.on { background: var(--accent); border-color: var(--accent); }
+  .shake { animation: shake .45s; }
+  @keyframes shake {
+    20%,60% { transform: translateX(-10px); }
+    40%,80% { transform: translateX(10px); }
+  }
+
+  .pad {
+    display: grid; grid-template-columns: repeat(3, 76px); gap: 16px;
+  }
+  .key {
+    width: 76px; height: 76px; border-radius: 50%; border: none;
+    background: var(--key); color: var(--ink);
+    font: 300 26px 'Inter', sans-serif;
+    box-shadow: 0 4px 14px rgba(200, 120, 120, .15);
+    cursor: pointer; transition: transform .1s, background .2s;
+  }
+  .key:active { transform: scale(.93); background: #f3e4e0; }
+  .key.empty { visibility: hidden; }
+  .msg { height: 20px; margin-top: 22px; font-size: 13px; color: var(--accent); }
+
+  /* puzzle */
+  #puzzle { text-align: center; }
+  .ptitle {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 30px; margin: 0 0 8px; color: var(--ink);
+  }
+  .psub { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 300px; margin: 0 0 18px; }
+  #board {
+    display: grid; background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(200, 110, 110, .25);
+  }
+  .tile {
+    background-repeat: no-repeat; cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .75);
+    transition: transform .15s, filter .2s;
+  }
+  .tile.sel { transform: scale(.93); filter: brightness(1.08) saturate(1.2); box-shadow: inset 0 0 0 3px var(--accent); z-index: 2; }
+  #board.done .tile { box-shadow: none; cursor: default; }
+  #pmsg { height: 22px; margin-top: 16px; font-size: 15px; color: var(--accent); }
+
+  /* inside */
+  #inside { text-align: center; }
+  #inside h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 44px; font-weight: 600; margin: 0 0 10px;
+  }
+  #inside p { color: var(--muted); max-width: 320px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="screen" id="lock">
+  <p class="eyebrow">Sadece senin için hazırlandı</p>
+  <div class="names">
+    <span id="name1">Ben</span><span class="heart">♥</span><span id="name2">Sen</span>
+  </div>
+  <p class="hint">küçük sırrımızı gir<br><small>yıl dönümümüz (gün/ay)</small></p>
+  <div class="dots" id="dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+  <div class="pad" id="pad"></div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<!-- PUZZLE -->
+<div class="screen hidden" id="puzzle">
+  <h2 class="ptitle">küçük resmimizi çöz</h2>
+  <p class="psub">iki kareye dokun ve yerlerini değiştir. resim tamamlandığında sayfa açılır.</p>
+  <div id="board"></div>
+  <div id="pmsg"></div>
+</div>
+
+<!-- INSIDE (içeriği sonra birlikte dolduracağız) -->
+<div class="screen hidden" id="inside">
+  <h1>İyi ki varsın ♥</h1>
+  <p>Burası seni bekliyordu. Çok yakında devamı gelecek...</p>
+</div>
+
+<script>
+  // ====== AYARLAR ======
+  const PASSWORD = "0412";          // yıl dönümü: 04/12
+  document.getElementById('name1').textContent = "Ben";   // kendi adını yaz
+  document.getElementById('name2').textContent = "Sen";   // sevgilinin adını yaz
+  // =====================
+
+  const pad = document.getElementById('pad');
+  const dots = [...document.querySelectorAll('.dot')];
+  const msg = document.getElementById('msg');
+  let entered = "";
+
+  const layout = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  layout.forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'key' + (k === '' ? ' empty' : '');
+    b.textContent = k;
+    if (k) b.addEventListener('click', () => press(k));
+    pad.appendChild(b);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (/^\d$/.test(e.key)) press(e.key);
+    else if (e.key === 'Backspace') press('⌫');
+  });
+
+  function render() {
+    dots.forEach((d, i) => d.classList.toggle('on', i < entered.length));
+  }
+
+  function press(k) {
+    msg.textContent = "";
+    if (k === '⌫') entered = entered.slice(0, -1);
+    else if (entered.length < 4) entered += k;
+    render();
+    if (entered.length === 4) setTimeout(check, 200);
+  }
+
+  function check() {
+    if (entered === PASSWORD) {
+      document.getElementById('lock').classList.add('hidden');
+      document.getElementById('puzzle').classList.remove('hidden');
+      initPuzzle();
+    } else {
+      const d = document.getElementById('dots');
+      d.classList.add('shake');
+      msg.textContent = "Hmm, bu değil... tekrar dene ♥";
+      setTimeout(() => { d.classList.remove('shake'); entered = ""; render(); }, 450);
+    }
+  }
+
+  // ====== PUZZLE ======
+  const PHOTO = "foto.jpg";   // fotoğrafı bu isimle aynı klasöre koy
+  const COLS = 3, ROWS = 4;   // parça sayısı: sütun x satır
+  let order = [], selected = null, solved = false;
+
+  function initPuzzle() {
+    const img = new Image();
+    img.onload = () => buildPuzzle(img.naturalWidth, img.naturalHeight, PHOTO);
+    img.onerror = () => { const p = placeholder(); buildPuzzle(p.w, p.h, p.url); };
+    img.src = PHOTO;
+  }
+
+  // foto.jpg yokken test için gösterilen geçici resim
+  function placeholder() {
+    const w = 900, h = 1200, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#ffd9d9'); grad.addColorStop(1, '#f58a97');
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(255,255,255,.85)';
+    g.font = '600 520px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('♥', w / 2, h / 2);
+    g.fillStyle = 'rgba(120,40,60,.55)';
+    g.font = '600 90px Georgia, serif';
+    for (let i = 0; i < COLS * ROWS; i++) {
+      g.fillText(i + 1, (i % COLS + .5) * w / COLS, (Math.floor(i / COLS) + .5) * h / ROWS);
+    }
+    return { w, h, url: c.toDataURL('image/jpeg', .9) };
+  }
+
+  function buildPuzzle(w, h, url) {
+    const board = document.getElementById('board');
+    const maxW = Math.min(window.innerWidth * 0.9, 420);
+    const maxH = window.innerHeight * 0.56;
+    let bw = maxW, bh = bw * h / w;
+    if (bh > maxH) { bh = maxH; bw = bh * w / h; }
+    board.style.width = bw + 'px'; board.style.height = bh + 'px';
+    board.style.gridTemplateColumns = 'repeat(' + COLS + ', 1fr)';
+    board.style.gridTemplateRows = 'repeat(' + ROWS + ', 1fr)';
+    board.dataset.url = url;
+
+    order = [...Array(COLS * ROWS).keys()];
+    do {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    } while (order.every((p, i) => p === i));
+    selected = null; solved = false;
+    renderBoard();
+  }
+
+  function renderBoard() {
+    const board = document.getElementById('board');
+    const url = board.dataset.url;
+    board.innerHTML = '';
+    order.forEach((piece, pos) => {
+      const c = piece % COLS, r = Math.floor(piece / COLS);
+      const t = document.createElement('div');
+      t.className = 'tile' + (selected === pos ? ' sel' : '');
+      t.style.backgroundImage = 'url("' + url + '")';
+      t.style.backgroundSize = (COLS * 100) + '% ' + (ROWS * 100) + '%';
+      t.style.backgroundPosition = (c / (COLS - 1) * 100) + '% ' + (r / (ROWS - 1) * 100) + '%';
+      t.addEventListener('click', () => tapTile(pos));
+      board.appendChild(t);
+    });
+  }
+
+  function tapTile(pos) {
+    if (solved) return;
+    if (selected === null) selected = pos;
+    else if (selected === pos) selected = null;
+    else {
+      [order[selected], order[pos]] = [order[pos], order[selected]];
+      selected = null;
+    }
+    renderBoard();
+    if (order.every((p, i) => p === i)) {
+      solved = true;
+      document.getElementById('board').classList.add('done');
+      document.getElementById('pmsg').textContent = 'tamamlandı ♥';
+      setTimeout(() => {
+        document.getElementById('puzzle').classList.add('hidden');
+        document.getElementById('inside').classList.remove('hidden');
+      }, 1600);
+    }
+  }
+
+  // petals
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (8 + Math.random() * 10) + 's';
+    p.style.animationDelay = (-Math.random() * 15) + 's';
+    p.style.transform = 'scale(' + (0.6 + Math.random()) + ')';
+    document.body.appendChild(p);
+  }
+</script>
+</body>
+</html>
