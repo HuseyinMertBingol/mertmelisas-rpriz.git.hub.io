@@ -204,6 +204,65 @@
   }
   .next:active { background: var(--accent); color: #fff; transform: scale(.96); }
 
+  /* gece gökyüzü + anılar */
+  .night-bg {
+    position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s ease;
+    background: radial-gradient(ellipse at 50% 0%, #20306b 0%, #0d1230 55%, #05070f 100%);
+  }
+  body.night .night-bg { opacity: 1; }
+  body.night .petal { display: none; }
+  .star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle 3s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+
+  #memories {
+    text-align: center; color: #f3ead8; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    justify-content: flex-start; padding: 52px 24px 80px;
+  }
+  .mwrap { width: 100%; max-width: 380px; margin: 0 auto; }
+  .meyebrow { letter-spacing: .35em; font-size: 11px; text-transform: uppercase; color: #e9c9a6; margin: 0 0 10px; }
+  .mtitle { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 42px; font-weight: 600; color: #fff6e3; margin: 0 0 44px; }
+  .mem { margin: 0 0 56px; opacity: 0; transform: translateY(30px); }
+  .mem.show { opacity: 1; transform: none; transition: opacity 1.3s ease, transform 1.3s ease; }
+  .mem img {
+    display: block; width: 100%; max-height: 74vh; object-fit: cover; border-radius: 18px;
+    box-shadow: 0 0 0 1px rgba(233, 201, 166, .5), 0 18px 50px rgba(0, 0, 0, .55), 0 0 40px rgba(233, 201, 166, .14);
+  }
+  .mnum { font-size: 12px; letter-spacing: .3em; color: #e9c9a6; margin: 20px 0 6px; }
+  .mhead { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 31px; font-weight: 600; color: #fff6e3; margin: 0 0 10px; }
+  .mtext { font-size: 15px; line-height: 1.75; color: rgba(243, 234, 216, .84); margin: 0; }
+  #memories .next { border-color: #e9c9a6; color: #f3ead8; background: rgba(255, 255, 255, .08); }
+  #memories .next:active { background: #e9c9a6; color: #0d1230; }
+
+  /* soru */
+  #question { text-align: center; --k: 1; --e: 1; }
+  .qheart { font-size: 46px; color: var(--accent); margin-bottom: 14px; animation: beat 1.4s infinite; }
+  .qtext {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 36px; line-height: 1.25; font-weight: 600; margin: 0 0 34px; max-width: 320px;
+  }
+  .qbtns { display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 90px; }
+  .qbtn {
+    border-radius: 40px; cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: all .45s ease; white-space: nowrap;
+  }
+  .yes {
+    border: none; color: #fff; font-weight: 400;
+    background: linear-gradient(145deg, #f5707a, #e5484f);
+    font-size: calc(17px * var(--e)); padding: calc(13px * var(--e)) calc(34px * var(--e));
+    box-shadow: 0 8px 20px rgba(240, 88, 95, .4);
+  }
+  .no {
+    border: 1.5px solid var(--muted); background: rgba(255, 255, 255, .6); color: var(--muted);
+    font-size: calc(17px * var(--k)); padding: calc(13px * var(--k)) calc(30px * var(--k));
+  }
+  .no.gone { opacity: 0; font-size: 0; padding: 0; border-width: 0; margin: 0; }
+  .qwarn { min-height: 44px; margin-top: 22px; max-width: 300px; font-size: 15px; line-height: 1.45; color: var(--accent); }
+  .rise {
+    position: fixed; bottom: -40px; color: var(--accent); z-index: 50; pointer-events: none;
+    animation: rise 2.8s ease-out forwards;
+  }
+  @keyframes rise { to { transform: translateY(-115vh) rotate(25deg); opacity: 0; } }
+
   /* son mektup */
   #letter {
     text-align: center; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -225,6 +284,8 @@
 </style>
 </head>
 <body>
+
+<div class="night-bg" id="nightBg"></div>
 
 <!-- LOCK SCREEN -->
 <div class="screen" id="lock">
@@ -248,7 +309,18 @@
   <div id="pmsg"></div>
 </div>
 
-<!-- INSIDE (içeriği sonra birlikte dolduracağız) -->
+<!-- SORU -->
+<div class="screen hidden" id="question">
+  <div class="qheart">♥</div>
+  <h2 class="qtext">Benimle bir ömür geçirmek ister misin?</h2>
+  <div class="qbtns">
+    <button class="qbtn yes" id="yesBtn">Evet</button>
+    <button class="qbtn no" id="noBtn">Hayır</button>
+  </div>
+  <div class="qwarn" id="qWarn"></div>
+</div>
+
+<!-- INSIDE -->
 <div class="screen hidden" id="inside">
   <div class="wrap">
     <h1>İyi ki varsın ♥</h1>
@@ -272,7 +344,17 @@
       </div>
     </div>
     <div class="songmsg" id="songMsg"></div>
-    <button class="next" id="nextBtn">son bir şey var ♥</button>
+    <button class="next" id="nextBtn">anılarımıza bak ✦</button>
+  </div>
+</div>
+
+<!-- ANILAR -->
+<div class="screen hidden" id="memories">
+  <div class="mwrap">
+    <p class="meyebrow">bizden kareler</p>
+    <h2 class="mtitle">Anılarımız ✦</h2>
+    <div id="memList"></div>
+    <button class="next" id="toLetterBtn">son bir şey var ♥</button>
   </div>
 </div>
 
@@ -422,7 +504,7 @@
       document.getElementById('pmsg').textContent = 'tamamlandı ♥';
       setTimeout(() => {
         document.getElementById('puzzle').classList.add('hidden');
-        document.getElementById('inside').classList.remove('hidden');
+        document.getElementById('question').classList.remove('hidden');
       }, 1600);
     }
   }
@@ -486,9 +568,160 @@
     setPlaying(false);
   });
 
-  // ====== SON MEKTUP ======
+  // ====== SORU ======
+  const qBox = document.getElementById('question');
+  const noBtn = document.getElementById('noBtn');
+  const yesBtn = document.getElementById('yesBtn');
+  const qWarn = document.getElementById('qWarn');
+  const WARNS = [
+    "Bana mı basmaya çalışıyorsun, seni gündik!",
+    "Yine mi? Bana mı basmaya çalışıyorsun, seni gündik!",
+    "Son kez söylüyorum, bana mı basmaya çalışıyorsun, seni gündik!",
+    "Hah, şimdi sadece Evet kaldı ♥"
+  ];
+  const NO_SIZES = [1, .72, .5, .3];   // Hayır'ın her basışta küçülme oranı
+  let noCount = 0, answered = false;
+
+  noBtn.addEventListener('click', () => {
+    if (answered || noCount >= 4) return;
+    noCount++;
+    qWarn.textContent = WARNS[noCount - 1];
+    qBox.style.setProperty('--e', String(1 + noCount * 0.14));
+    if (noCount < 4) {
+      qBox.style.setProperty('--k', String(NO_SIZES[noCount]));
+    } else {
+      noBtn.classList.add('gone');
+      setTimeout(() => { noBtn.style.display = 'none'; }, 500);
+    }
+  });
+
+  function heartBurst() {
+    for (let i = 0; i < 28; i++) {
+      const h = document.createElement('span');
+      h.className = 'rise';
+      h.textContent = '♥';
+      h.style.left = Math.random() * 100 + 'vw';
+      h.style.fontSize = (18 + Math.random() * 28) + 'px';
+      h.style.animationDelay = (Math.random() * 0.8) + 's';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 4000);
+    }
+  }
+
+  yesBtn.addEventListener('click', () => {
+    if (answered) return;
+    answered = true;
+    qWarn.textContent = 'biliyordum ♥';
+    heartBurst();
+    setTimeout(() => {
+      qBox.classList.add('hidden');
+      document.getElementById('inside').classList.remove('hidden');
+    }, 2200);
+  });
+
+  // ====== ANILAR ======
+  const MEMORIES = [
+    { 
+      img: "foto1.jpg", 
+      title: "İlk Çiçeğimiz", 
+      text: "Bu sana aldığım ilk çiçek ve o an gözlerinde gördüğüm tarif edilemez mutluluk... Her şeyin en güzel başlangıcı." 
+    },
+    { 
+      img: "foto2.jpg", 
+      title: "Birlikte İlk Yeni Yaşın", 
+      text: "Benimle girdiğin ilk yeni yaşın, birlikte kutladığımız ilk doğum günün. İyi ki doğdun, iyi ki hayatıma girdin." 
+    },
+    { 
+      img: "foto3.jpg", 
+      title: "Yan Yana 3. Yaşın", 
+      text: "Zaman su gibi akıp geçerken benimle beraber kutladığın 3. doğum günün. Her yeni yaşında hep elini tutuyor olacağım." 
+    },
+    { 
+      img: "foto4.jpg", 
+      title: "Çok Yakında...", 
+      text: "Burası henüz dolmadı... 4 Aralık'ta en güzel anımızla dolacak ♥" 
+    }
+  ];
+
+  // yıldızlar
+  const nightBg = document.getElementById('nightBg');
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('span');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    const z = 1 + Math.random() * 2;
+    s.style.width = s.style.height = z + 'px';
+    s.style.animationDuration = (2 + Math.random() * 4) + 's';
+    s.style.animationDelay = (-Math.random() * 5) + 's';
+    nightBg.appendChild(s);
+  }
+
+  // fotoğraf dosyası yoksa gösterilen geçici kare (4. fotoğraf için özel 4 Aralık tasarımı)
+  function memPlaceholder(n) {
+    const c = document.createElement('canvas');
+    c.width = 800; c.height = 1000;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, 800, 1000);
+    grad.addColorStop(0, '#2a3b82'); grad.addColorStop(1, '#0d1230');
+    g.fillStyle = grad; g.fillRect(0, 0, 800, 1000);
+    g.fillStyle = 'rgba(233,201,166,.9)';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (n === 4) {
+      g.font = '600 96px Georgia, serif';
+      g.fillText('4 Aralık ♥', 400, 460);
+      g.font = '40px Georgia, serif';
+      g.fillText('Çok yakında burada...', 400, 560);
+    } else {
+      g.font = '600 260px Georgia, serif';
+      g.fillText(String(n), 400, 470);
+      g.font = '60px Georgia, serif';
+      g.fillText('foto' + n + '.jpg', 400, 720);
+    }
+    return c.toDataURL('image/jpeg', .85);
+  }
+
+  (function renderMemories() {
+    const list = document.getElementById('memList');
+    MEMORIES.forEach((m, i) => {
+      const card = document.createElement('div');
+      card.className = 'mem';
+      const im = new Image();
+      im.alt = m.title;
+      im.onerror = () => { im.onerror = null; im.src = memPlaceholder(i + 1); };
+      im.src = m.img;
+      const num = document.createElement('div'); num.className = 'mnum'; num.textContent = '✦ ' + (i + 1) + ' ✦';
+      const head = document.createElement('h3'); head.className = 'mhead'; head.textContent = m.title;
+      const txt = document.createElement('p'); txt.className = 'mtext'; txt.textContent = m.text;
+      card.append(im, num, head, txt);
+      list.appendChild(card);
+    });
+  })();
+
+  let memObs = null;
+  function watchMemories() {
+    if (memObs) return;
+    memObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('show'); memObs.unobserve(e.target); }
+      });
+    }, { root: document.getElementById('memories'), threshold: 0.15 });
+    document.querySelectorAll('.mem').forEach(el => memObs.observe(el));
+  }
+
   document.getElementById('nextBtn').addEventListener('click', () => {
     document.getElementById('inside').classList.add('hidden');
+    document.body.classList.add('night');
+    const mem = document.getElementById('memories');
+    mem.classList.remove('hidden');
+    mem.scrollTop = 0;
+    setTimeout(watchMemories, 300);
+  });
+
+  // ====== SON MEKTUP ======
+  document.getElementById('toLetterBtn').addEventListener('click', () => {
+    document.getElementById('memories').classList.add('hidden');
+    document.body.classList.remove('night');
     document.getElementById('letter').classList.remove('hidden');
     document.querySelectorAll('.lline').forEach((el, i) => {
       setTimeout(() => {
